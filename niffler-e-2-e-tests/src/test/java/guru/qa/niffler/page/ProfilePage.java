@@ -2,7 +2,9 @@ package guru.qa.niffler.page;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.WebElementCondition;
 import io.qameta.allure.Step;
+import javax.swing.JLabel;
 import org.springframework.core.io.ClassPathResource;
 
 import javax.annotation.Nonnull;
@@ -14,6 +16,7 @@ import java.util.Base64;
 import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.attributeMatching;
 import static com.codeborne.selenide.Condition.disabled;
+import static com.codeborne.selenide.Condition.enabled;
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.value;
 import static com.codeborne.selenide.Condition.visible;
@@ -31,6 +34,8 @@ public class ProfilePage extends BasePage<ProfilePage> {
   private final SelenideElement submitButton = $("button[type='submit']");
   private final SelenideElement categoryInput = $("input[name='category']");
   private final SelenideElement archivedSwitcher = $(".MuiSwitch-input");
+  private final SelenideElement addToArchiveButton = $("button[aria-label='Archive category']");
+  private final SelenideElement addToArchiveButtonSubmit = $("button[class='MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-1v1p78s']").shouldHave(text("Archive"));
 
   private final ElementsCollection bubbles = $$(".MuiChip-filled.MuiChip-colorPrimary");
   private final ElementsCollection bubblesArchived = $$(".MuiChip-filled.MuiChip-colorDefault");
@@ -53,6 +58,7 @@ public class ProfilePage extends BasePage<ProfilePage> {
   @Step("Set category: {0}")
   @Nonnull
   public ProfilePage addCategory(String category) {
+    categoryInput.shouldBe(visible).shouldBe(enabled);
     categoryInput.setValue(category).pressEnter();
     return this;
   }
@@ -123,6 +129,25 @@ public class ProfilePage extends BasePage<ProfilePage> {
   @Nonnull
   public ProfilePage checkThatPageLoaded() {
     userName.should(visible);
+    return this;
+  }
+
+  public boolean isCategoryVisible(String name) {
+    return bubbles.find(text(name)).exists();
+  }
+
+  @Step("Archive category: {0}")
+  public ProfilePage archiveCategory(String name) {
+    addToArchiveButton.click();
+    addToArchiveButtonSubmit.click();
+    return this;
+  }
+
+  @Step("Restore category: {0}")
+  public ProfilePage restoreCategory(String name) {
+    archivedSwitcher.click();
+    SelenideElement archivedChip = bubblesArchived.find(text(name));
+    archivedChip.sibling(0).$("svg[data-testid=RestoreIcon]").click();
     return this;
   }
 }

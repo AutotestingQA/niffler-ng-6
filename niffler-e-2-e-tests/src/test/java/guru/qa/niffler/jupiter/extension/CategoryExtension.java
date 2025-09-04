@@ -7,6 +7,8 @@ import guru.qa.niffler.model.rest.UserJson;
 import guru.qa.niffler.service.SpendClient;
 import guru.qa.niffler.service.impl.SpendApiClient;
 import org.apache.commons.lang3.ArrayUtils;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import static guru.qa.niffler.utils.RandomDataUtils.randomCategoryName;
 
-public class CategoryExtension implements BeforeEachCallback, ParameterResolver {
+public class CategoryExtension implements BeforeEachCallback, AfterTestExecutionCallback, ParameterResolver {
 
   public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(CategoryExtension.class);
 
@@ -63,6 +65,8 @@ public class CategoryExtension implements BeforeEachCallback, ParameterResolver 
         });
   }
 
+
+
   @Override
   public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
     return parameterContext.getParameter().getType().isAssignableFrom(CategoryJson[].class);
@@ -74,4 +78,21 @@ public class CategoryExtension implements BeforeEachCallback, ParameterResolver 
     return (CategoryJson[]) extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class)
         .toArray();
   }
+
+  @Override
+  public void afterTestExecution(ExtensionContext context) throws Exception {
+    CategoryJson category =
+        context.getStore(NAMESPACE).get(context.getUniqueId(), CategoryJson.class);
+
+    if (category != null && !category.archived()) {
+      CategoryJson archivedCategory = new CategoryJson(
+          category.id(),
+          category.name(),
+          category.username(),
+          true
+      );
+      spendClient.updateCategory(archivedCategory);
+    }
+  }
+
 }

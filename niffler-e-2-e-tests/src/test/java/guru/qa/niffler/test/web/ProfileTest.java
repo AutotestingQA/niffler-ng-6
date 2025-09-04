@@ -129,4 +129,47 @@ public class ProfileTest {
         .toProfilePage()
         .checkThatCategoryInputDisabled();
   }
+
+  @User
+  @Test
+  void shouldArchiveCategoryIfNotArchived(UserJson user) {
+    String categoryName = randomCategoryName();
+
+    ProfilePage profilePage = Selenide.open(LoginPage.URL, LoginPage.class)
+        .fillLoginPage(user.username(), user.testData().password())
+        .submit(new MainPage())
+        .checkThatPageLoaded()
+        .getHeader()
+        .toProfilePage();
+
+    profilePage.addCategory(categoryName)
+        .checkAlertMessage("You've added new category: " + categoryName)
+        .checkCategoryExists(categoryName);
+
+    profilePage.archiveCategory(categoryName)
+        .checkArchivedCategoryExists(categoryName);
+  }
+
+  @User
+  @Test
+  void shouldRestoreCategoryFromArchive(UserJson user) {
+    String categoryName = randomCategoryName();
+
+    ProfilePage profilePage = Selenide.open(LoginPage.URL, LoginPage.class)
+        .fillLoginPage(user.username(), user.testData().password())
+        .submit(new MainPage())
+        .checkThatPageLoaded()
+        .getHeader()
+        .toProfilePage();
+
+    if (!profilePage.isCategoryVisible(categoryName)) {
+      profilePage.addCategory(categoryName)
+          .checkAlertMessage("You've added new category: " + categoryName);
+      profilePage.archiveCategory(categoryName);
+    }
+
+    profilePage.restoreCategory(categoryName);
+
+    profilePage.checkCategoryExists(categoryName);
+  }
 }
